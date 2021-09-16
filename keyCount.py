@@ -35,7 +35,7 @@ def readfile(path):
     for i in codeList:
         if not re.match("^\s*#include", i):
             code += i.strip()+' '  # remove start space and end \n
-    code = re.sub("else if", "elseif", code)
+    # code = re.sub("else if", "elseif", code)
     code = re.sub("\"[^\"]*\"", "__STRING__", code)
     return code
 

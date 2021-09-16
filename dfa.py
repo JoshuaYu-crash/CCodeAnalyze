@@ -50,7 +50,18 @@ class DFA:
                     if state[char]["is_end"]:
                         # and (char_pos + 1 < and content[char_pos + 1] not in state[char])
                         # if next char in state[char], then the match can not finish
-                        if not (char_pos + 1 < conlen and content[char_pos + 1] in state[char]):
+                        # if the match string's left and right is num or alpha, it could not be the match word
+                        lpos = temp_match_list[index]["start"]-1
+                        rpos = char_pos + 1
+                        if not ((rpos < conlen
+                                and (content[rpos] in state[char]
+                                     or content[rpos].isalpha()
+                                    or content[rpos].isalnum()
+                                ))
+                        or (lpos >= 0
+                                and (content[lpos].isalpha()
+                                    or content[lpos].isalnum())
+                                )):
                             match_list.append(copy.deepcopy(temp_match_list[index]))
                             # print(char_pos+1, content[char_pos + 1], state[char])
 
