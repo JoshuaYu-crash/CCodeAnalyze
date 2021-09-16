@@ -40,16 +40,36 @@ def readfile(path):
     return code
 
 
+def findRightIndex(startIndex, endIndex, str):
+    stack = []
+    ans = startIndex
+    for i in range(startIndex, endIndex):
+        if str[i] == "{":
+            stack.append("i")
+        elif str[i] == "}":
+            if len(stack) != 0:
+                stack.pop()
+            else:
+                ans = i
+                break
+        else:
+            pass
+    return ans
+
+
 # codeHandler
 def codeHandler(code, level):
     ansList = []
     if level >= 1:
         ansList.append(countKeys(code))
+    if level >= 2:
+        ansList.append(countSwitch(code))
 
     output(ansList)
     pass
 
 
+# level 1 count keys
 def countKeys(code):
     dfa = DFA(keysList)
     for i in dfa.match(code):
@@ -57,10 +77,27 @@ def countKeys(code):
     return len(dfa.match(code))
 
 
+# level 2 count switch and case
+def countSwitch(code):
+    switchList = re.finditer("[ };]switch\([^\)]*\)\s*{", code)
+    switchNum = 0
+    caseNumList = []
+    for switch in switchList:
+        switchNum+=1
+        leftIndex = switch.end()
+        rightIndex = findRightIndex(leftIndex, len(code), code)
+        caseList = re.findall("case", code[leftIndex:rightIndex])
+        caseNumList.append(len(caseList))
+    return [switchNum, caseNumList]
+
+
 # output ans
 def output(ansList):
     if len(ansList) >= 1:
         print("total num: ", ansList[0])
+    if len((ansList)) >= 2:
+        print("switch num:", ansList[1][0])
+        print("case num:", " ".join([str(i) for i in ansList[1][1]]))
     pass
 
 
