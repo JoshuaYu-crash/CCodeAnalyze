@@ -10,8 +10,8 @@ keysList = ["auto", "break", "case", "char", "const", "continue",
             "short", "signed", "sizeof", "static", "struct", "switch",
             "typedef", "union", "unsigned", "void", "volatile", "while"]
 
-targetsList = ["if", "else", "ifelse", "switch"]
 
+# count for if-else and if-else if-else
 ie = 0
 iei = 0
 
@@ -49,6 +49,7 @@ def readfile(path):
     return code
 
 
+# find the pos of } by given {'s pos
 def findRightIndex(startIndex, endIndex, str):
     stack = []
     ans = startIndex
@@ -66,7 +67,7 @@ def findRightIndex(startIndex, endIndex, str):
     return ans
 
 
-# codeHandler
+# hand code by level
 def codeHandler(code, level):
     ansList = []
     if level >= 1:
@@ -74,7 +75,7 @@ def codeHandler(code, level):
     if level >= 2:
         ansList.append(countSwitch(code))
     if level >= 3:
-        matchIf(re.sub("else if", "elseif", code))
+        matchIf(re.sub("else\s+if", "elseif", code))
         ansList.append(ie)
     if level >= 4:
         ansList.append(iei)
@@ -92,7 +93,7 @@ def countKeys(code):
 
 # level 2 count switch and case
 def countSwitch(code):
-    switchList = re.finditer("[ };]switch\([^\)]*\)\s*{", code)
+    switchList = re.finditer("[ };]switch\([^)]*\)\s*{", code)
     switchNum = 0
     caseNumList = []
     for switch in switchList:
@@ -104,23 +105,9 @@ def countSwitch(code):
     return [switchNum, caseNumList]
 
 
-# output ans
-def output(ansList):
-    if len(ansList) >= 1:
-        print("total num: ", ansList[0])
-    if len(ansList) >= 2:
-        print("switch num:", ansList[1][0])
-        print("case num:", " ".join([str(i) for i in ansList[1][1]]))
-    if len(ansList) >= 3:
-        print("if-else num:", ansList[2])
-    if len(ansList) >= 4:
-        print("if-elseif-else num:", ansList[3])
-    pass
-
-
-# match if-else and if-else if-else
+# level 3 and 4 match if-else and if-else if-else
 def matchIf(code):
-    ifObj = re.search("[ ;}]if\s*\([^\)]*\)\s*{", code)
+    ifObj = re.search("[ ;}]if\s*\([^)]*\)\s*{", code)
     if ifObj:
         # init status
         ifElse = False
@@ -132,7 +119,7 @@ def matchIf(code):
         matchIf(ifBody)
 
         # 1.match else if
-        if re.search("^\s*elseif\s*\([^\)]*\)\s*{", code[rpos+1:]):
+        if re.search("^\s*elseif\s*\([^)]*\)\s*{", code[rpos+1:]):
             ifElseIf = True
             rpos += matchElseIf(code[rpos+1:])+1
 
@@ -164,19 +151,33 @@ def matchElse(code):
 
 # match else-if
 def matchElseIf(code):
-    elseIfObj = re.search("^\s*elseif\s*\([^\)]*\)\s*{", code)
+    elseIfObj = re.search("^\s*elseif\s*\([^)]*\)\s*{", code)
     if elseIfObj:
         lpos = elseIfObj.end()
         rpos = findRightIndex(lpos, len(code), code)
         elseIfBody = code[lpos:rpos]
         matchIf(elseIfBody)
-        if re.search("^\s*elseif\s*\([^\)]*\)\s*{", code[rpos + 1:]):
+        if re.search("^\s*elseif\s*\([^)]*\)\s*{", code[rpos + 1:]):
             nextRPosLen = matchElseIf(code[rpos+1:])
             rpos += nextRPosLen + 1
             return rpos
         else:
             return rpos
     return 0
+
+
+# output ans
+def output(ansList):
+    if len(ansList) >= 1:
+        print("total num: ", ansList[0])
+    if len(ansList) >= 2:
+        print("switch num:", ansList[1][0])
+        print("case num:", " ".join([str(i) for i in ansList[1][1]]))
+    if len(ansList) >= 3:
+        print("if-else num:", ansList[2])
+    if len(ansList) >= 4:
+        print("if-elseif-else num:", ansList[3])
+    pass
 
 
 if __name__ == '__main__':
