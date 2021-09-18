@@ -3,13 +3,11 @@ import os
 import re
 from dfa import DFA
 
-
 keysList = ["auto", "break", "case", "char", "const", "continue",
             "default", "do", "double", "else", "enum", "extern", "float",
             "for", "goto", "if", "int", "long", "register", "return",
             "short", "signed", "sizeof", "static", "struct", "switch",
             "typedef", "union", "unsigned", "void", "volatile", "while"]
-
 
 # count for if-else and if-else if-else
 ie = 0
@@ -41,7 +39,7 @@ def readfile(path):
             # remove keys in annotation //
             i = re.sub("//.*", "", i)
             # remove start space and end \n
-            code += i.strip()+' '
+            code += i.strip() + ' '
     # remove keys in string
     code = re.sub("\"[^\"]*\"", "__STRING__", code)
     # remove keys in annotation /* ~~ */
@@ -101,9 +99,9 @@ def countSwitch(code):
     switchNum = 0
     caseNumList = []
     for switch in switchList:
-        switchNum+=1
+        switchNum += 1
         leftIndex = switch.end()
-        rightIndex = findRightIndex(leftIndex, len(code), code)
+        rightIndex = findRightIndex(leftIndex-1, len(code), code)
         caseList = re.findall("case", code[leftIndex:rightIndex])
         caseNumList.append(len(caseList))
     return [switchNum, caseNumList]
@@ -111,13 +109,13 @@ def countSwitch(code):
 
 # level 3 and 4 match if-else and if-else if-else
 # match code block, keep matching the next if
-def  matchCode(code):
+def matchCode(code):
     lpos = 0
     codeLen = len(code)
     while True:
         if lpos >= codeLen or re.search("[ ;}]if\s*\([^)]*\)", code[lpos:]) is None:
             break
-        lpos = matchIf(code[lpos:]) + lpos+1
+        lpos = matchIf(code[lpos:]) + lpos
 
 
 # need match if block and return right block position
@@ -139,7 +137,7 @@ def matchIf(code):
 
         elif re.search("^\s*{", code[lpos:]):
             lpos = re.search("^\s*{", code[lpos:]).end() + lpos
-            rpos = findRightIndex(lpos-1, len(code), code)
+            rpos = findRightIndex(lpos - 1, len(code), code)
             ifBody = code[lpos:rpos]
             matchCode(ifBody)
 
@@ -182,11 +180,11 @@ def matchElseIf(code):
         # match {}
         elif re.search("^\s*{", code[lpos:]):
             lpos = re.search("^\s*{", code[lpos:]).end() + lpos
-            rpos = findRightIndex(lpos-1, len(code), code)
+            rpos = findRightIndex(lpos - 1, len(code), code)
             elseIfBody = code[lpos:rpos]
             matchCode(elseIfBody)
             if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
-                rpos += matchElseIf(code[rpos+1:]) + 1
+                rpos += matchElseIf(code[rpos + 1:]) + 1
                 return rpos
             else:
                 return rpos
@@ -195,11 +193,10 @@ def matchElseIf(code):
             rpos = re.search(";", code[lpos:]).end() + lpos
             elseIfBody = code[lpos:rpos]
             if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
-                rpos += matchElseIf(code[rpos+1:]) + 1
+                rpos += matchElseIf(code[rpos + 1:]) + 1
                 return rpos
             else:
                 return rpos
-
 
 
 # match else block and return right position
@@ -210,14 +207,13 @@ def matchElse(code):
         #     ^
         lpos = elseObj.end()
 
-
         if re.search("^\s*if\s*\([^)]*\)", code[lpos:]):
             print("if")
 
         # match {}
         elif re.search("^\s*{", code[lpos:]):
             lpos = re.search("^\s*{", code[lpos:]).end() + lpos
-            rpos = findRightIndex(lpos-1, len(code), code)
+            rpos = findRightIndex(lpos - 1, len(code), code)
             elseBody = code[lpos:rpos]
             matchCode(elseBody)
             return rpos
@@ -264,6 +260,6 @@ def performancTest(path, time):
 
 # main func
 if __name__ == '__main__':
+    # performancTest("./data/key.c", 10000)
     run()
     pass
-
