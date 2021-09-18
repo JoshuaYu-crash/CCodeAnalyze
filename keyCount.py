@@ -75,7 +75,11 @@ def codeHandler(code, level):
     if level >= 2:
         ansList.append(countSwitch(code))
     if level >= 3:
-        matchIf(re.sub("else\s+if", "elseif", code))
+        # exchange else if to elseif
+        code = re.sub("else\s+if", "elseif", code)
+        # exchange else{ to else {
+        code = re.sub("else{", "else {", code)
+        matchCode(code)
         ansList.append(ie)
     if level >= 4:
         ansList.append(iei)
@@ -106,64 +110,123 @@ def countSwitch(code):
 
 
 # level 3 and 4 match if-else and if-else if-else
+# match code block, keep matching the next if
+def  matchCode(code):
+    lpos = 0
+    codeLen = len(code)
+    while True:
+        if lpos >= codeLen or re.search("[ ;}]if\s*\([^)]*\)", code[lpos:]) is None:
+            break
+        lpos = matchIf(code[lpos:]) + lpos+1
+
+
+# need match if block and return right block position
 def matchIf(code):
-    ifObj = re.search("[ ;}]if\s*\([^)]*\)\s*{", code)
+    ifObj = re.search("[ ;}]if\s*\([^)]*\)", code)
     if ifObj:
-        # init status
-        ifElse = False
-        ifElseIf = False
+        # if()
+        #     ^
         lpos = ifObj.end()
-        rpos = findRightIndex(lpos-1, len(code), code)
-        # match if body
-        ifBody = code[lpos:rpos]
-        matchIf(ifBody)
+
+        ifElseIf = False
+        ifElse = False
+        global ie
+        global iei
+
+        # find rpos
+        if re.search("^\s*if\s*\([^)]*\)", code[lpos:]):
+            rpos = matchIf(code[lpos:]) + lpos
+
+        elif re.search("^\s*{", code[lpos:]):
+            lpos = re.search("^\s*{", code[lpos:]).end() + lpos
+            rpos = findRightIndex(lpos-1, len(code), code)
+            ifBody = code[lpos:rpos]
+            matchCode(ifBody)
+
+        # with no {}, end with ;
+        else:
+            rpos = re.search(";", code[lpos:]).end() + lpos
+            ifBody = code[lpos:rpos]
 
         # 1.match else if
-        if re.search("^\s*elseif\s*\([^)]*\)\s*{", code[rpos+1:]):
+        if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
             ifElseIf = True
-            rpos += matchElseIf(code[rpos+1:])+1
+            rpos += matchElseIf(code[rpos + 1:]) + 1
 
         # 2.match else
-        if re.search("^\s*else\s*{", code[rpos+1:]):
+        if re.search("^\s*else[^0-9a-zA-Z_]", code[rpos + 1:]):
             ifElse = True
-            rpos += matchElse(code[rpos+1:])+1
+            rpos += matchElse(code[rpos + 1:]) + 1
 
         # judge status
         if ifElse and not ifElseIf:
-            global ie
             ie += 1
         if ifElseIf and ifElse:
-            global iei
             iei += 1
-        matchIf(code[rpos+1:])
-
-
-# match else
-def matchElse(code):
-    elseObj = re.search("^\s*else\s*{", code)
-    if elseObj:
-        lpos = elseObj.end()
-        rpos = findRightIndex(lpos-1, len(code), code)
-        elseBody = code[lpos:rpos]
-        matchIf(elseBody)
         return rpos
 
 
-# match else-if
+# match else-if block and return right position
 def matchElseIf(code):
-    elseIfObj = re.search("^\s*elseif\s*\([^)]*\)\s*{", code)
+    elseIfObj = re.search("^\s*elseif\s*\([^)]*\)", code)
     if elseIfObj:
+        # elseif()
+        #         ^
         lpos = elseIfObj.end()
-        rpos = findRightIndex(lpos-1, len(code), code)
-        elseIfBody = code[lpos:rpos]
-        matchIf(elseIfBody)
-        if re.search("^\s*elseif\s*\([^)]*\)\s*{", code[rpos + 1:]):
-            nextRPosLen = matchElseIf(code[rpos+1:])
-            rpos += nextRPosLen + 1
+        # search else-if body
+        # with no {}, match if
+        if re.search("^\s*if\s*\([^)]*\)", code[lpos:]):
+            rpos = matchIf(code[lpos:]) + lpos
             return rpos
+
+        # match {}
+        elif re.search("^\s*{", code[lpos:]):
+            lpos = re.search("^\s*{", code[lpos:]).end() + lpos
+            rpos = findRightIndex(lpos-1, len(code), code)
+            elseIfBody = code[lpos:rpos]
+            matchCode(elseIfBody)
+            if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
+                rpos += matchElseIf(code[rpos+1:]) + 1
+                return rpos
+            else:
+                return rpos
+        # with no {}, match ;
         else:
+            rpos = re.search(";", code[lpos:]).end() + lpos
+            elseIfBody = code[lpos:rpos]
+            if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
+                rpos += matchElseIf(code[rpos+1:]) + 1
+                return rpos
+            else:
+                return rpos
+
+
+
+# match else block and return right position
+def matchElse(code):
+    elseObj = re.search("^\s*else[^0-9a-zA-Z_]", code)
+    if elseObj:
+        # else
+        #     ^
+        lpos = elseObj.end()
+
+
+        if re.search("^\s*if\s*\([^)]*\)", code[lpos:]):
+            print("if")
+
+        # match {}
+        elif re.search("^\s*{", code[lpos:]):
+            lpos = re.search("^\s*{", code[lpos:]).end() + lpos
+            rpos = findRightIndex(lpos-1, len(code), code)
+            elseBody = code[lpos:rpos]
+            matchCode(elseBody)
             return rpos
-    return 0
+
+        # with no {}, match ;
+        else:
+            rpos = re.search(";", code[lpos:]).end() + lpos
+            elseIfBody = code[lpos:rpos]
+            return rpos
 
 
 # output ans
@@ -180,8 +243,27 @@ def output(ansList):
     pass
 
 
-if __name__ == '__main__':
+# run code
+def run():
     path, level = argparse()
     code = readfile(path)
     codeHandler(code, level)
+
+
+# performance test
+def performancTest(path, time):
+    for i in range(0, time):
+        global ie
+        global iei
+        ie = 0
+        iei = 0
+        level = 4
+        code = readfile(path)
+        codeHandler(code, level)
+
+
+# main func
+if __name__ == '__main__':
+    run()
     pass
+
