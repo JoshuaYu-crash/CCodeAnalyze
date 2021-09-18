@@ -55,9 +55,9 @@ def findRightIndex(startIndex, endIndex, str):
     ans = startIndex
     for i in range(startIndex, endIndex):
         if str[i] == "{":
-            stack.append("i")
+            stack.append(str[i])
         elif str[i] == "}":
-            if len(stack) != 0:
+            if len(stack) > 1:
                 stack.pop()
             else:
                 ans = i
@@ -113,7 +113,7 @@ def matchIf(code):
         ifElse = False
         ifElseIf = False
         lpos = ifObj.end()
-        rpos = findRightIndex(lpos, len(code), code)
+        rpos = findRightIndex(lpos-1, len(code), code)
         # match if body
         ifBody = code[lpos:rpos]
         matchIf(ifBody)
@@ -143,7 +143,7 @@ def matchElse(code):
     elseObj = re.search("^\s*else\s*{", code)
     if elseObj:
         lpos = elseObj.end()
-        rpos = findRightIndex(lpos, len(code), code)
+        rpos = findRightIndex(lpos-1, len(code), code)
         elseBody = code[lpos:rpos]
         matchIf(elseBody)
         return rpos
@@ -154,7 +154,7 @@ def matchElseIf(code):
     elseIfObj = re.search("^\s*elseif\s*\([^)]*\)\s*{", code)
     if elseIfObj:
         lpos = elseIfObj.end()
-        rpos = findRightIndex(lpos, len(code), code)
+        rpos = findRightIndex(lpos-1, len(code), code)
         elseIfBody = code[lpos:rpos]
         matchIf(elseIfBody)
         if re.search("^\s*elseif\s*\([^)]*\)\s*{", code[rpos + 1:]):
