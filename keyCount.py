@@ -44,7 +44,7 @@ def readfile(path):
     code = re.sub("\"[^\"]*\"", "__STRING__", code)
     # remove keys in annotation /* ~~ */
     code = re.sub("/\*[\s\S]*\*/", "", code)
-    return code
+    return " " + code
 
 
 # find the pos of } by given {'s pos
@@ -85,12 +85,21 @@ def codeHandler(code, level):
     pass
 
 
-# level 1 count keys
+# level 1 count keys, by DFA
 def countKeys(code):
     dfa = DFA(keysList)
     # for i in dfa.match(code):
     #     print(i)
     return len(dfa.match(code))
+
+
+# level 1 count keys, by re
+def countKeysByRE(code):
+    sum = 0
+    for i in keysList:
+        temp = len(re.findall("[^0-9a-zA-Z\_]" + i + "[^0-9a-zA-Z\_]", code))
+        sum +=temp
+    return sum
 
 
 # level 2 count switch and case
@@ -247,7 +256,7 @@ def run():
 
 
 # performance test
-def performancTest(path, time):
+def performanceTest(path, time):
     for i in range(0, time):
         global ie
         global iei
@@ -260,6 +269,6 @@ def performancTest(path, time):
 
 # main func
 if __name__ == '__main__':
-    # performancTest("./data/key.c", 10000)
-    run()
+    performanceTest("./data/key.c", 10000)
+    # run()
     pass
