@@ -125,6 +125,7 @@ def matchCode(code):
         if lpos >= codeLen or re.search("[ ;}]if\s*\([^)]*\)", code[lpos:]) is None:
             break
         lpos = matchIf(code[lpos:]) + lpos
+    return ie, iei
 
 
 # need match if block and return right block position
@@ -152,7 +153,7 @@ def matchIf(code):
 
         # with no {}, end with ;
         else:
-            rpos = re.search(";", code[lpos:]).end() + lpos
+            rpos = re.search(";", code[lpos:]).end() + lpos - 1
             ifBody = code[lpos:rpos]
 
         # 1.match else if
@@ -199,7 +200,7 @@ def matchElseIf(code):
                 return rpos
         # with no {}, match ;
         else:
-            rpos = re.search(";", code[lpos:]).end() + lpos
+            rpos = re.search(";", code[lpos:]).end() + lpos - 1
             elseIfBody = code[lpos:rpos]
             if re.search("^\s*elseif\s*\([^)]*\)", code[rpos + 1:]):
                 rpos += matchElseIf(code[rpos + 1:]) + 1
@@ -229,7 +230,7 @@ def matchElse(code):
 
         # with no {}, match ;
         else:
-            rpos = re.search(";", code[lpos:]).end() + lpos
+            rpos = re.search(";", code[lpos:]).end() + lpos - 1
             elseIfBody = code[lpos:rpos]
             return rpos
 
@@ -269,6 +270,6 @@ def performanceTest(path, time):
 
 # main func
 if __name__ == '__main__':
-    performanceTest("./data/key.c", 10000)
-    # run()
+    # performanceTest("./data/key.c", 10000)
+    run()
     pass
