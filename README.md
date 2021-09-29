@@ -1,7 +1,7 @@
 # CCodeAnalyze
 The first personal programming assignment in software engineering of Fuzhou University
 
-how use ?
+how to use ?
 
 ```shell
 # python keyCount.py filepath level
